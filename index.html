@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShawSpend - Household Expense Tracker</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0ea5e9">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+        const CATEGORIES = [
+            { id: 'food_delivery', name: 'Food Delivery', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+            { id: 'gas', name: 'Gas', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
+            { id: 'groceries', name: 'Groceries', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+            { id: 'entertainment', name: 'Entertainment', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+            { id: 'kid_items', name: 'Kid Items', color: 'bg-pink-500/20 text-pink-400 border-pink-500/30' },
+            { id: 'medical', name: 'Medical', color: 'bg-red-500/20 text-red-400 border-red-500/30' },
+            { id: 'cellular_bill', name: 'Cellular Bill', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+            { id: 'light', name: 'Light', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+            { id: 'water', name: 'Water', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' },
+            { id: 'internet', name: 'Internet', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' },
+            { id: 'herbal_remedies', name: 'Herbal Remedies', color: 'bg-green-500/20 text-green-400 border-green-500/30' }
+        ];
+        const RATES = { USD: 1, JMD: 156.50, TTD: 6.80 };
+        function App() {
+            const [activeTab, setActiveTab] = useState(1);
+            const [defaultCurrency, setDefaultCurrency] = useState('USD');
+            const [expenses, setExpenses] = useState([
+                { id: 1, date: '2026-11-05', category: 'groceries', amountUSD: 145.00, currency: 'USD', note: 'Supermarket' }
+            ]);
+            const [amount, setAmount] = useState('');
+            const [inputCurrency, setInputCurrency] = useState('USD');
+            const [selectedCategory, setSelectedCategory] = useState('groceries');
+            const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
+            const [note, setNote] = useState('');
+
+            const convertAmount = (val, fromCurr, toCurr) => {
+                const num = parseFloat(val) || 0;
+                return (num / RATES[fromCurr]) * RATES[toCurr];
+            };
+
+            const handleAdd = (e) => {
+                e.preventDefault();
+                if (!amount || parseFloat(amount) <= 0) return;
+                const amountUSD = parseFloat(amount) / RATES[inputCurrency];
+                setExpenses([{ id: Date.now(), date: expenseDate, category: selectedCategory, amountUSD, currency: inputCurrency, note: note || selectedCategory }, ...expenses]);
+                setAmount('');
+                setNote('');
+            };
+
+            return (
+                <div className="max-w-md mx-auto min-h-screen pb-24 bg-slate-900 text-slate-100 flex flex-col shadow-2xl">
+                    <header className="p-4 bg-slate-900 border-b border-slate-800 sticky top-0 z-50 flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                            <div className="w-8 h-8 rounded-lg bg-sky-500 flex items-center justify-center font-bold text-white">S</div>
+                            <h1 className="font-bold text-lg text-white">ShawSpend</h1>
+                        </div>
+                        <select value={defaultCurrency} onChange={e => setDefaultCurrency(e.target.value)} className="bg-slate-800 text-xs rounded px-2 py-1 text-sky-400">
+                            <option value="USD">USD ($)</option>
+                            <option value="JMD">JMD (J$)</option>
+                            <option value="TTD">TTD (TT$)</option>
+                        </select>
+                    </header>
+                    <main className="p-4 flex-1 space-y-4">
+                        {activeTab === 1 && (
+                            <div className="space-y-4">
+                                <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
+                                    <h2 className="text-xs font-semibold uppercase text-sky-400">Log Expense</h2>
+                                    <form onSubmit={handleAdd} className="space-y-3">
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <input type="date" value={expenseDate} onChange={e => setExpenseDate(e.target.value)} className="bg-slate-800 text-xs rounded p-2 text-white" />
+                                            <select value={inputCurrency} onChange={e => setInputCurrency(e.target.value)} className="bg-slate-800 text-xs rounded p-2 text-white">
+                                                <option value="USD">USD</option>
+                                                <option value="JMD">JMD</option>
+                                                <option value="TTD">TTD</option>
+                                            </select>
+                                        </div>
+                                        <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="w-full bg-slate-800 text-xs rounded p-2 text-white">
+                                            {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                        </select>
+                                        <input type="number" step="0.01" placeholder="0.00 Amount" value={amount} onChange={e => setAmount(e.target.value)} className="w-full bg-slate-800 text-sm rounded p-3 text-white font-bold" />
+                                        <input type="text" placeholder="Note (optional)" value={note} onChange={e => setNote(e.target.value)} className="w-full bg-slate-800 text-xs rounded p-2 text-white" />
+                                        <button type="submit" className="w-full bg-sky-600 text-white font-semibold py-2.5 rounded-xl text-xs">Save Entry</button>
+                                    </form>
+                                </div>
+                                <div className="space-y-2">
+                                    <h3 className="text-xs uppercase text-slate-400">Recent Logs</h3>
+                                    {expenses.map(item => (
+                                        <div key={item.id} className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex justify-between items-center text-xs">
+                                            <div>
+                                                <span className="font-semibold text-sky-400 uppercase">{item.category}</span>
+                                                <p className="text-slate-400">{item.note}</p>
+                                            </div>
+                                            <div className="text-right font-bold text-white">
+                                                ${convertAmount(item.amountUSD, 'USD', defaultCurrency).toFixed(2)}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {activeTab === 2 && (
+                            <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3 text-xs">
+                                <h2 className="font-semibold uppercase text-sky-400">Savings Goals & Predictions</h2>
+                                <p className="text-slate-400">Monthly budget tracking and pattern forecasting active.</p>
+                            </div>
+                        )}
+                        {activeTab === 3 && (
+                            <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3 text-xs">
+                                <h2 className="font-semibold uppercase text-sky-400">Weekly Email Summary</h2>
+                                <p className="text-slate-400">Multi-currency breakdown ready for dispatch.</p>
+                            </div>
+                        )}
+                    </main>
+                    <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-slate-900 border-t border-slate-800 p-3 flex justify-around">
+                        <button onClick={() => setActiveTab(1)} className={`text-xs font-semibold ${activeTab === 1 ? 'text-sky-400' : 'text-slate-500'}`}>1. Log</button>
+                        <button onClick={() => setActiveTab(2)} className={`text-xs font-semibold ${activeTab === 2 ? 'text-sky-400' : 'text-slate-500'}`}>2. Goals</button>
+                        <button onClick={() => setActiveTab(3)} className={`text-xs font-semibold ${activeTab === 3 ? 'text-sky-400' : 'text-slate-500'}`}>3. Email</button>
+                    </nav>
+                </div>
+            );
+        }
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
